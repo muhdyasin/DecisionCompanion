@@ -1,30 +1,65 @@
 ﻿using DecisionCompanion.Domain;
 using DecisionCompanion.Application;
 
-var criteria = new List<Criterion>
+Console.WriteLine("=== Decision Companion System ===");
+Console.WriteLine();
+
+var criteria = new List<Criterion>();
+var options = new List<Option>();
+
+
+Console.Write("Enter number of criteria: ");
+int criteriaCount = int.Parse(Console.ReadLine()!);
+
+for (int i = 0; i < criteriaCount; i++)
 {
-    new Criterion("Performance", 9),
-    new Criterion("Battery", 1)
-};
+    Console.WriteLine($"\nCriterion {i + 1}:");
 
-var options = new List<Option>
+    Console.Write("Name: ");
+    string name = Console.ReadLine()!;
+
+    Console.Write("Weight: ");
+    double weight = double.Parse(Console.ReadLine()!);
+
+    criteria.Add(new Criterion(name, weight));
+}
+
+
+Console.Write("\nEnter number of options: ");
+int optionCount = int.Parse(Console.ReadLine()!);
+
+for (int i = 0; i < optionCount; i++)
 {
-    new Option("Laptop A", new Dictionary<string, double>
+    Console.WriteLine($"\nOption {i + 1}:");
+
+    Console.Write("Name: ");
+    string optionName = Console.ReadLine()!;
+
+    var scores = new Dictionary<string, double>();
+
+    foreach (var criterion in criteria)
     {
-        { "Performance", 8 },
-        { "Battery", 10 }
-    }),
-    new Option("Laptop B", new Dictionary<string, double>
-    {
-        { "Performance", 9 },
-        { "Battery", 1 }
-    })
-};
+        Console.Write($"Score for {criterion.Name}: ");
+        double score = double.Parse(Console.ReadLine()!);
+        scores[criterion.Name] = score;
+    }
 
-IDecisionEvaluator evaluator = new WeightedDecisionEvaluator();
-var rankedResults = evaluator.Evaluate(options, criteria);
+    options.Add(new Option(optionName, scores));
+}
 
-var explanationService = new ExplanationService();
-var explanation = explanationService.GenerateExplanation(rankedResults);
 
-Console.WriteLine(explanation);
+try
+{
+    IDecisionEvaluator evaluator = new WeightedDecisionEvaluator();
+    var rankedResults = evaluator.Evaluate(options, criteria);
+
+    var explanationService = new ExplanationService();
+    var explanation = explanationService.GenerateExplanation(rankedResults);
+
+    Console.WriteLine("\n=== Ranked Results ===\n");
+    Console.WriteLine(explanation);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"\nError: {ex.Message}");
+}
