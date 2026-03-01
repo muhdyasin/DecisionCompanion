@@ -4,56 +4,104 @@
 
 This project is a CLI-based Decision Companion System that helps users evaluate multiple options using weighted criteria.
 
-The goal is to provide a transparent and explainable decision-making system without relying on black-box AI logic.
+The goal of this system is to build a transparent and explainable decision-making tool without relying on black-box AI logic.
 
 The system:
+- Accepts multiple criteria with weights
 - Accepts multiple options
-- Accepts criteria with weights
 - Normalizes weights
 - Computes weighted scores
 - Ranks options
-- Explains the ranking
+- Explains how the ranking was produced
+- Allows users to dynamically enter inputs through CLI
 
 ---
 
-## Problem Understanding
+## My Understanding of the Problem
 
-The core requirement is to help users compare options based on multiple criteria where each criterion can have different importance.
+The assignment is not just about computing scores. It is about designing a system that helps users make structured decisions.
 
-The system must:
-- Be dynamic (not hard-coded comparisons)
-- Be explainable
-- Not rely entirely on AI
-- Allow different inputs to produce different outcomes
+The key expectations I identified were:
 
-I chose to focus on building a clean and correct core evaluation engine rather than adding UI or persistence.
+- The system must not be a static hard-coded comparison.
+- Users must be able to change inputs and see different outcomes.
+- The logic must be explainable.
+- AI should not replace core reasoning.
+
+From this, I understood that clarity of thinking and architecture is more important than feature count.
+
+So I focused on building a clean and correct core evaluation engine and then exposing it through a dynamic CLI interface.
 
 ---
 
-## Design Decisions
+## Why I Structured the Solution This Way
 
-### 1. CLI Application
+I structured the project into three layers:
 
-I chose a CLI-based implementation to keep the focus on the decision logic rather than frontend complexity.
+Domain Layer:
+- Criterion
+- Option
+- EvaluatedOption
 
-The CLI is sufficient to demonstrate:
-- Evaluation logic
-- Ranking
-- Explanation generation
+Application Layer:
+- IDecisionEvaluator
+- WeightedDecisionEvaluator
+- ExplanationService
+
+Presentation Layer:
+- Program.cs (CLI)
+
+I separated scoring logic from explanation logic to maintain single responsibility.
+
+The evaluator handles only mathematical computation.
+The explanation service handles interpretation.
+The CLI handles input and output.
+
+This keeps the core decision logic independent from presentation and makes the system easier to extend.
+
+---
+## Design Diagram
+
+The architecture diagram illustrates the separation between presentation, application, and domain layers.
+
+The CLI collects input and delegates evaluation to the WeightedDecisionEvaluator, which performs validation, normalization, scoring, and ranking. The ExplanationService then interprets results for output.
+
+The following diagram shows the overall architecture and execution flow of the system:
+
+![Architecture Diagram](architecture-diagram.png)
+
+---
+
+## Design Decisions and Trade-offs
+
+### 1. CLI Instead of Web App
+
+I chose a CLI-based implementation because the focus of this assignment is the decision engine itself.
+
+Adding a web interface or database would increase complexity without improving the reasoning model.
+
+Trade-off:
+- No UI layer
+- Faster development
+- Clearer focus on evaluation logic
 
 ---
 
 ### 2. Weighted Sum Model
 
-The system uses a weighted sum model:
+The system uses a Weighted Sum Model:
 
-FinalScore = Σ (NormalizedWeight × Score)
+FinalScore = Σ (NormalizedWeight × Score) ,where normalized weights sum to 1.
 
-This model was chosen because:
+I chose this model because:
 - It is deterministic
 - It is easy to explain
 - It supports trade-offs between criteria
-- It fits well for an MVP
+- It avoids black-box behavior
+
+Trade-off:
+- The model assumes linear and compensatory trade-offs.
+- It cannot enforce strict minimum constraints.
 
 ---
 
@@ -62,77 +110,92 @@ This model was chosen because:
 Weights are normalized so that their total equals 1.
 
 This ensures:
-- The final score remains within the original scoring scale
-- Results are predictable and comparable
-- Different numeric weight scales (e.g., 1 & 1 vs 100 & 100) behave consistently
+- The final score remains within the scoring range
+- Results are predictable
+- Different weight scales (e.g., 1 & 1 vs 100 & 100) behave consistently
+
+Without normalization, output magnitude would depend on arbitrary weight values.
 
 ---
 
-### 4. Separation of Responsibilities
+### 4. No Hard Constraints (MVP Scope)
 
-The architecture separates concerns into:
+This version does not enforce strict minimum requirements.
 
-- Domain layer (models)
-- Application layer (evaluation + explanation)
-- Presentation layer (CLI)
+For example, if a user requires "Performance must be at least 7", the current model cannot strictly reject options below that threshold.
 
-The scoring logic and explanation logic are separated to keep the evaluator focused only on calculations.
+This was an intentional decision to keep the MVP focused on a single decision paradigm (weighted scoring).
 
----
-
-### 5. AI Usage
-
-AI is not used in the decision calculation.
-
-The scoring logic is fully deterministic.
-
-AI may optionally be used to improve explanation wording, but it does not affect rankings.
+Future extension:
+A preprocessing constraint filter can be added before scoring.
 
 ---
 
-## Assumptions
+## Assumptions Made
 
-- Users provide numeric scores for all criteria
-- All options contain scores for all criteria
-- Criteria are independent
-- Trade-offs between criteria are allowed
-
----
-
-## Limitations
-
-- No hard constraints (e.g., minimum thresholds)
-- Linear trade-offs only
-- No persistence
-- No UI
-- No sensitivity analysis
-
-Hard constraints can be added in a future iteration as a preprocessing step.
+- Users provide numeric scores for all criteria.
+- Each option contains a score for every defined criterion.
+- Criteria are independent.
+- Trade-offs between criteria are allowed.
+- Users understand the meaning of the weights they assign.
 
 ---
 
-## Edge Cases Handled
+## Edge Cases Considered
 
 - Empty criteria list → validation error
 - Empty options list → validation error
 - Missing score for a criterion → validation error
 - Total weight equals zero → validation error
-- Equal final scores → marked as tie with explanation
+- Equal final scores → marked as tie
+- Weight scale invariance is ensured through normalization
 
 ---
 
-## How to Run
+## How to Run the Project
+
+1. Clone the repository.
+2. Navigate to the project folder.
+3. Run:
 
 dotnet run
 
-(Adjust command if needed based on project structure.)
+4. Follow the CLI prompts to enter:
+   - Number of criteria
+   - Criterion names and weights
+   - Number of options
+   - Scores for each criterion
+
+The system will output a ranked recommendation with contribution breakdown.
 
 ---
 
-## Future Improvements
+## AI Usage
 
-- Add support for hard constraints
-- Add sensitivity analysis
-- Add a web interface
-- Add persistence
-- Support alternative decision models
+AI was used during development for:
+
+- Clarifying mathematical concepts such as normalization and compensatory behavior.
+- Brainstorming architectural structure.
+- Reviewing trade-offs and edge cases.
+
+AI was not used for decision computation.
+The scoring logic is fully deterministic and explainable.
+
+---
+
+## What I Would Improve With More Time
+
+- Add support for hard constraints (minimum thresholds).
+- Add sensitivity analysis to observe how weight changes affect ranking.
+- Add unit tests.
+- Add a web interface for better usability.
+- Support additional multi-criteria decision models (e.g., non-compensatory models).
+- Improve input validation robustness using TryParse and retry loops.
+
+---
+
+## Summary
+
+This project focuses on building a clear, explainable, and well-structured decision engine rather than maximizing features.
+
+The emphasis is on transparency, correctness, and architectural clarity.

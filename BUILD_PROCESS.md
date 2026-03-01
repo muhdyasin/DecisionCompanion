@@ -1,82 +1,100 @@
 # Build Process
 
-## Initial Approach
+## How I Started
 
-I started by thinking about building a web-based decision tool.
+At the beginning, I considered building a web-based decision tool with a UI.
 
-After evaluating the scope, I decided to focus on building a clean and well-structured core evaluation engine first.
+After reviewing the assignment requirements more carefully, I realized that the evaluation focuses more on clarity of thinking, system design, and explainability rather than UI complexity.
 
-The goal became clarity and correctness rather than feature count.
-
----
-
-## Model Selection
-
-I explored different approaches such as:
-- Machine learning-based ranking
-- Constraint-based filtering
-- More advanced multi-criteria models
-
-I chose the weighted sum model because:
-- It is simple and transparent
-- It is deterministic
-- It is easy to explain
-- It fits the assignment requirements
+So I decided to start by building a clean and well-structured core decision engine using a CLI interface. The priority became correctness, transparency, and architecture rather than feature count.
 
 ---
 
-## Understanding the Mathematics
+## How My Thinking Evolved
 
-While implementing the model, I spent time understanding:
-- Weight normalization
-- Why normalization matters
-- Compensatory trade-offs
-- How extreme weights affect outcomes
+Initially, I understood the weighted sum formula only at a surface level.
 
-This helped shape:
-- The normalization step
-- Tie handling logic
-- Explanation design
+While implementing it, I realized I needed to deeply understand:
 
----
+- Why weight normalization is necessary  
+- Whether normalization affects ranking  
+- What compensatory trade-offs mean  
+- How extreme weights influence outcomes  
 
-## Architectural Decisions
+By testing different inputs, I observed:
 
-Initially, I considered putting explanation logic inside the evaluator.
+- Normalization changes score scale but not ranking  
+- Extreme weights cause one criterion to dominate  
+- The model allows trade-offs between criteria  
 
-I refactored it into a separate ExplanationService to:
-- Maintain single responsibility
-- Keep calculation logic pure
-- Improve clarity and testability
-
-I also decided that Program.cs should only orchestrate calls and not contain business logic.
+This changed how I viewed the system. I began treating it as a formal decision model rather than just a scoring formula.
 
 ---
 
-## Validation Strategy
+## Alternative Approaches Considered
 
-I chose strict validation:
-- Missing scores cause an error
-- Zero total weight causes an error
+I explored several alternative approaches:
 
-This avoids silent distortions in scoring.
+1. Machine learning-based ranking  
+   Rejected because it introduces opacity and conflicts with the requirement that logic must be explainable.
+
+2. Constraint-based filtering (hard thresholds)  
+   Rejected for the MVP because it introduces a non-compensatory decision mechanism and increases complexity.
+
+3. More advanced multi-criteria decision models  
+   Rejected due to scope and the goal of keeping the solution focused and explainable.
+
+I chose the weighted sum model because it is deterministic, transparent, and suitable for a minimal but solid implementation.
 
 ---
 
-## Tie Handling
+## Refactoring Decisions
 
-If two options receive the same final score, they are marked as tied.
+Initially, I considered placing explanation logic inside the evaluator.
 
-The explanation compares their criterion-level contributions to show how different trade-offs resulted in equal scores.
+After reconsidering separation of concerns principles, I refactored the design:
+
+- WeightedDecisionEvaluator handles only scoring logic.
+- ExplanationService handles interpretation of results.
+- Program.cs handles user input and orchestration only.
+
+This separation improved clarity, maintainability, and testability.
 
 ---
 
-## Trade-offs
+## Mistakes and Corrections
+
+1. I initially hard-coded sample input in Program.cs.  
+   This violated the requirement that the system must not be static.  
+   I corrected this by implementing interactive CLI input.
+
+2. I underestimated the importance of normalization.  
+   After testing different weight scales (e.g., 1 & 1 vs 100 & 100), I realized normalization is required to maintain scale invariance.
+
+3. I originally treated tie handling as a simple ranking case.  
+   Later, I improved it to display contribution breakdown so ties are properly explained.
+
+---
+
+## What Changed During Development and Why
+
+- Input handling changed from hard-coded values to dynamic CLI input to satisfy the requirement of user-driven decision changes.
+
+- Architecture evolved to clearly separate scoring logic and explanation logic.
+
+- My understanding of compensatory decision behavior improved through testing and iteration.
+
+- Hard constraint handling was intentionally deferred to keep the MVP focused on one consistent decision paradigm.
+
+---
+
+## Final Trade-offs
 
 I intentionally did not implement:
-- Hard constraints
-- Persistence
-- UI layer
-- Advanced MCDM methods
 
-The focus was a clean and explainable MVP.
+- Hard constraints  
+- Persistence  
+- UI layer  
+- Advanced multi-criteria decision methods  
+
+The focus was on building a clean, explainable, and well-structured MVP that clearly demonstrates decision modeling and architectural clarity.
